@@ -18,8 +18,10 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 | P3 | Durcir l’API Meta : preuves, rôles, langues, injection, multipart et jeton de session | Agent `meta_api_audit` | Terminé | P1 | Transcription temporaire en mémoire, preuves revalidées, analyse liée à un jeton opaque |
 | P4 | Corriger le parcours frontend et la revue superviseur | Agent `frontend_review` + Codex | Terminé | P1, P2, P3 | Labels neutres, preuves horodatées, accessibilité, suivi de session, jeton opaque et erreurs réessayables |
 | P5 | Écrire le script de démo de 3 minutes | Agent `product_demo_review` | Terminé | P0, P1 | Script chronométré, parcours réel + repli synthétique explicitement marqué |
-| P6 | Configurer la clé Meta dans l’environnement local | Utilisateur | En attente utilisateur | Créer/récupérer une clé API | Appels Meta activés; ne jamais envoyer la clé dans le chat ou le dépôt |
-| P7 | Faire fonctionner un appel de bout en bout avec audio autorisé | Codex + utilisateur | À faire | P6, fichier compatible | Transcription, analyse Muse Spark, citations et décisions visibles |
+| P6 | Configurer la clé Meta dans l’environnement local | Utilisateur | Terminé | Créer/récupérer une clé API | Clé présente dans `.env` local; sa valeur n’est pas lue, partagée ou suivie par Git |
+| P7 | Faire fonctionner un appel de bout en bout avec audio autorisé | Codex + utilisateur | En attente de sélection dans le navigateur | P6, P14, fichier compatible | Transcription, analyse Muse Spark, citations et décisions visibles |
+| P14 | Autoriser l’envoi de l’audio de démonstration à Meta | Utilisateur | Terminé | Enregistrement autorisé disponible | Accord explicite reçu : audio à Meta Voice Transcribe, texte à Muse Spark |
+| P13 | Respecter le seuil d’utilisation ChatGPT/Codex | Codex | En cours | Seuil utilisateur : 40 % restants | Arrêter le travail KALA SENSE lorsque l’utilisation restante atteint 40 % |
 | P8 | Intégrer et revoir les changements des agents | Codex | Terminé | P3–P5 | Backend, interface, confidentialité et script relus ensemble; jeton d’analyse aligné bout en bout |
 | P9 | Choisir la piste et confirmer la liste de l’équipe | Utilisateur | Terminé | — | Indie Developer, solo; contributeur : SANVI TATA MARC ANTOINE |
 | P10 | Préparer le déploiement Node et le dépôt public isolé | Agent `product_demo_review` + Codex | En cours | P8, P9 | Node natif choisi; configuration Render locale prête, aucun service public créé |
@@ -30,14 +32,15 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 
 - **Terminé :** 8 mini-tâches (P0–P5, P8–P9)
 - **En cours :** préparation du déploiement Node/Render et du dépôt public isolé (P10)
-- **À faire / attente utilisateur :** clé API (P6), appel réel (P7), vidéo et soumission (P11–P12)
+- **À faire / attente utilisateur :** re-sélection de l’audio dans le navigateur (P7), vidéo et soumission (P11–P12)
+- **Garde-fou ChatGPT/Codex :** arrêter le travail lorsque 40 % d’utilisation restent. Dernière lecture : 58 % consommés / 42 % restants. La vérification sera faite à la reprise ou à un jalon, sans interrogation périodique.
 - **Prochain jalon :** ajouter la clé localement, puis obtenir une analyse réelle de bout en bout.
 
 ## Décisions / actions attendues de l’utilisateur
 
-1. Ajouter la clé Meta Model API au fichier local `.env` (`MODEL_API_KEY=...`), qui est exclu du dépôt. Ne pas la coller ici.
+1. Re-sélectionner dans le navigateur l’enregistrement autorisé après l’actualisation de la page, puis indiquer quand il est prêt pour l’essai réel. L’envoi à Meta Voice Transcribe puis à Muse Spark est autorisé.
 2. Node natif choisi par l’utilisateur pour conserver les appels jusqu’à 10 minutes. La configuration Render Free est prête localement; aucun service ni déploiement public n’a été créé.
-3. Sélectionner l’enregistrement autorisé dans le navigateur au moment de la démo; aucun audio n’est ajouté au dépôt.
+3. Sélectionner l’enregistrement autorisé dans le navigateur après confirmation; aucun audio n’est ajouté au dépôt.
 
 ## Risques suivis
 
@@ -69,6 +72,14 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 - Dépôt local isolé initialisé dans le seul dossier KALA-SENSE; aucun commit ni dépôt distant public pour l’instant.
 - L’utilisateur confirme que la clé API n’est pas encore configurée; le champ doit être renseigné localement.
 - Vérification locale sans afficher de secret : `.env` existe, mais `MODEL_API_KEY` est toujours vide ou absent; P6 et P7 restent donc en attente.
+- L’utilisateur précise que le seuil de 40 % concerne l’utilisation ChatGPT/Codex, pas les 150 $ de crédits Meta. Lecture actuelle : 50 % consommés et 50 % restants; arrêt du travail KALA SENSE à 40 % restants.
+- Vérification locale sans afficher la valeur : `MODEL_API_KEY` est désormais présente dans `.env`; P6 est terminée. P7 attend une confirmation explicite avant le transfert audio vers Meta Voice Transcribe puis Muse Spark.
+- Autorisation explicite reçue pour transmettre l’enregistrement de démonstration sélectionné à Meta Voice Transcribe, puis sa transcription à Muse Spark. L’ancienne page a dû être actualisée pour charger le nouveau code; la sélection temporaire a été perdue, et aucun audio n’a encore été envoyé.
+- À la reprise, l’onglet KALA SENSE est à jour mais aucun fichier n’est sélectionné. Usage Codex lu : 54 % consommés / 46 % restants; seuil d’arrêt à 40 % non atteint.
+- Nouvelle vérification : toujours aucun fichier sélectionné dans l’onglet. Le fichier « WAV AUDIO TEST.wav » affiché avant l’actualisation n’a pas été retrouvé dans les dossiers usuels; ne pas choisir un autre enregistrement à la place.
+- Vérification à la reprise suivante : la page locale reste prête, aucun audio sélectionné; usage Codex lu à 56 % consommés / 44 % restants.
+- Nouvelle vérification : aucun fichier n’est sélectionné dans le navigateur; usage Codex lu à 57 % consommés / 43 % restants.
+- Reprise suivante : aucun fichier audio n’est sélectionné dans l’onglet. Usage Codex : 58 % consommés / 42 % restants; seuil d’arrêt à 40 % non atteint.
 - Revue de sécurité : l’analyse réelle exige désormais le jeton opaque retourné à l’import; le frontend le transmet dans le même parcours, l’exemple synthétique fixe reste sans jeton.
 - Serveur local redémarré sur le port 3000 avec le runtime Node 24.22.1 fourni par Codex; l’aperçu navigateur a été mis en file d’ouverture. Ce n’est pas encore une validation avec la version Render 22.22.x ni un appel Meta réel.
 - Les corrections frontend signalent le nombre de constats écartés faute de preuve unique; l’import peut être relancé après erreur avec avertissement de consommation possible de crédits, et se désactive après succès.
