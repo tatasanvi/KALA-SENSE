@@ -24,14 +24,14 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 | P13 | Respecter le seuil d’utilisation ChatGPT/Codex | Codex | En cours | Seuil utilisateur : 40 % restants | Arrêter le travail KALA SENSE lorsque l’utilisation restante atteint 40 % |
 | P8 | Intégrer et revoir les changements des agents | Codex | Terminé | P3–P5 | Backend, interface, confidentialité et script relus ensemble; jeton d’analyse aligné bout en bout |
 | P9 | Choisir la piste et confirmer la liste de l’équipe | Utilisateur | Terminé | — | Indie Developer, solo; contributeur : SANVI TATA MARC ANTOINE |
-| P10 | Préparer le déploiement Node et le dépôt public isolé | Agent `product_demo_review` + Codex | En cours | P8, P9 | Node natif choisi; configuration Render locale prête, aucun service public créé |
+| P10 | Préparer le déploiement Node et le dépôt public isolé | Agent `product_demo_review` + Codex | En cours | P8, P9 | Node natif choisi; configuration Render locale prête, dépôt public créé et poussé, aucun service Render créé |
 | P11 | Préparer le script et enregistrer la démo de 3 minutes | Codex + utilisateur | À faire | P7–P10 | Vidéo courte, démonstration réelle, aucune statistique présentée comme mesurée sans preuve |
 | P12 | Contrôler la soumission et soumettre sur la plateforme | Utilisateur (soumissionnaire) + Codex (préparation) | À faire | P10, P11 | Liens publics vérifiés et membres ajoutés avant l’échéance |
 
 ## Vue rapide
 
 - **Terminé :** 8 mini-tâches (P0–P5, P8–P9)
-- **En cours :** préparation du déploiement Node/Render et du dépôt public isolé (P10)
+- **En cours :** déploiement Node/Render (P10, dépôt public poussé sur `main`, service Render restant à créer) et garde-fou d’usage (P13)
 - **À faire / attente utilisateur :** re-sélection de l’audio dans le navigateur (P7), vidéo et soumission (P11–P12)
 - **Garde-fou ChatGPT/Codex :** arrêter le travail lorsque 40 % d’utilisation restent. Dernière lecture : 58 % consommés / 42 % restants. La vérification sera faite à la reprise ou à un jalon, sans interrogation périodique.
 - **Prochain jalon :** ajouter la clé localement, puis obtenir une analyse réelle de bout en bout.
@@ -83,4 +83,4 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 - Revue de sécurité : l’analyse réelle exige désormais le jeton opaque retourné à l’import; le frontend le transmet dans le même parcours, l’exemple synthétique fixe reste sans jeton.
 - Serveur local redémarré sur le port 3000 avec le runtime Node 24.22.1 fourni par Codex; l’aperçu navigateur a été mis en file d’ouverture. Ce n’est pas encore une validation avec la version Render 22.22.x ni un appel Meta réel.
 - Les corrections frontend signalent le nombre de constats écartés faute de preuve unique; l’import peut être relancé après erreur avec avertissement de consommation possible de crédits, et se désactive après succès.
-- Commit initial local créé après vérification de la liste indexée : `e225613` (`feat: build hackathon KALA SENSE prototype`). Aucun dépôt GitHub n’a été créé et aucun déploiement n’a été lancé.
+- Dépôt distant relié et poussé : `origin` → `https://github.com/tatasanvi/KALA-SENSE.git`, branche `main` à jour au commit `dfef18a`. Contenu public vérifié (12 fichiers, aucun `.env`, aucune clé). Serveur local répondant sur `http://localhost:3000/` (200). Reste P10 : créer le service Render depuis le Blueprint, saisir `MODEL_API_KEY` (`sync: false`) à la création initiale, puis gérer la clé dans les paramètres Render.
