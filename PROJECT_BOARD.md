@@ -51,7 +51,7 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 - Les plafonds d’appels sont par processus et peuvent repartir après redémarrage; ils limitent les appels accidentels sans garantir une limite de facturation globale.
 - L’installation Node par défaut est 18.14.1; un runtime Codex Node 24.22.1 est également présent, tandis que la configuration Render cible 22.22.x. Il faut valider le parcours sur la version de déploiement avant publication.
 - Configuration Render alignée : `.node-version` fixe Node 22.22.0 et `package.json` limite le moteur à `>=22.22.0 <23.0.0`; le serveur écoute sur `0.0.0.0:$PORT`. `MODEL_API_KEY` est déclaré en `sync: false` : saisir le secret lors de la création initiale du Blueprint, puis le gérer dans les paramètres Render.
-- Le dépôt Git local est maintenant initialisé dans KALA-SENSE (`main`, aucun commit); il n’inclut donc pas la racine personnelle `C:/Users/NotoriosBiig`. Vérifier `.gitignore` et les fichiers ignorés avant tout commit ou publication.
+- Le dépôt Git local est isolé dans KALA-SENSE et n’inclut pas la racine personnelle `C:/Users/NotoriosBiig`. Le commit initial `e225613` contient les 12 fichiers du prototype; `.env` est ignoré et absent du commit. Il n’existe encore aucun dépôt distant public.
 - Après transcription, le serveur conserve le texte et les tours en mémoire pendant au plus 15 minutes, puis les supprime au lancement de l’analyse; le README et l’interface doivent refléter cette limite.
 - Le tableau de bord antérieur reste exclu du matériel de soumission, sauf si les apports pré-hackathon sont explicitement identifiés et que seuls les ajouts du hackathon sont présentés.
 
@@ -72,3 +72,4 @@ Une démo publique et reproductible qui prend un enregistrement autorisé, le tr
 - Revue de sécurité : l’analyse réelle exige désormais le jeton opaque retourné à l’import; le frontend le transmet dans le même parcours, l’exemple synthétique fixe reste sans jeton.
 - Serveur local redémarré sur le port 3000 avec le runtime Node 24.22.1 fourni par Codex; l’aperçu navigateur a été mis en file d’ouverture. Ce n’est pas encore une validation avec la version Render 22.22.x ni un appel Meta réel.
 - Les corrections frontend signalent le nombre de constats écartés faute de preuve unique; l’import peut être relancé après erreur avec avertissement de consommation possible de crédits, et se désactive après succès.
+- Commit initial local créé après vérification de la liste indexée : `e225613` (`feat: build hackathon KALA SENSE prototype`). Aucun dépôt GitHub n’a été créé et aucun déploiement n’a été lancé.
