@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kala-sense
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MODEL_API_KEY
+        sync: false
