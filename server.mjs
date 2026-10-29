@@ -312,7 +312,13 @@ async function analyze(request, response) {
   let analysisToken;
   try {
     const body = await readBody(request, 160_000);
-    const { transcript, analysisToken: suppliedToken } = JSON.parse(body.toString('utf8'));
+    let payload;
+    try {
+      payload = JSON.parse(body.toString('utf8'));
+    } catch {
+      return sendJson(response, 400, { error: 'Corps de requête JSON invalide.' });
+    }
+    const { transcript, analysisToken: suppliedToken } = payload;
     if (typeof transcript !== 'string' || transcript.trim().length < 20 || transcript.length > 120_000) {
       return sendJson(response, 400, { error: 'Transcription trop courte ou trop longue pour l’analyse.' });
     }
@@ -334,9 +340,6 @@ async function analyze(request, response) {
     }
     const apiKey = getApiKey();
     enforceModelCallLimit('analyze');
-    // Keep the canonical transcript only long enough for the browser to hand it back
-    // for analysis. The local request reference remains available until this call ends.
-    if (!record.synthetic) forgetTranscription(analysisToken);
     const prompt = [
       'Tu es KALA SENSE, un copilote de supervision qualité pour les centres de relation client en Afrique francophone.',
       'Analyse uniquement les éléments explicitement présents dans la transcription. Ne déduis pas une violation de procédure sans règle fournie. Ne juge jamais l’accent, les émotions ou la personnalité.',
@@ -374,6 +377,9 @@ async function analyze(request, response) {
     const content = completion.choices?.[0]?.message?.content;
     if (!content) throw new Error('Meta a renvoyé une réponse vide.');
     const anchoredAnalysis = anchorFindings(JSON.parse(content), turns);
+    // Consume the one-use token only after a successful analysis, so a failed
+    // attempt can be retried without paying for a new transcription.
+    if (!record.synthetic) forgetTranscription(analysisToken);
     sendJson(response, 200, anchoredAnalysis);
   } catch (error) {
     if (error.status === 429 && error.retryAfterSeconds) response.setHeader('retry-after', String(error.retryAfterSeconds));
