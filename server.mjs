@@ -211,6 +211,52 @@ function getApiKey() {
   return key;
 }
 
+// Chantier 1 « persistance » (Supabase, zéro dépendance, fetch natif).
+// Optionnel : sans SUPABASE_URL ni SUPABASE_SECRET_KEY, la persistance est
+// désactivée et le parcours existant (transcription + analyse) est inchangé.
+const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY || '';
+const persistenceEnabled = Boolean(supabaseUrl && supabaseServiceKey);
+if (!persistenceEnabled) {
+  console.log('Persistance désactivée : SUPABASE_URL ou SUPABASE_SECRET_KEY manquant.');
+}
+
+async function persistAnalysis({ transcript, findings }) {
+  if (!persistenceEnabled) return;
+  try {
+    const supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/analyses`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseServiceKey,
+        authorization: `Bearer ${supabaseServiceKey}`,
+        'content-type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({
+        // org_id et supervisor_id réels fournis par le chantier auth à venir.
+        org_id: 'demo',
+        supervisor_id: null,
+        transcript,
+        findings,
+        status: 'completed',
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!supabaseResponse.ok) {
+      throw new Error(`statut ${supabaseResponse.status}`);
+    }
+  } catch {
+    // La persistance ne doit jamais casser une analyse réussie ni exposer de secret.
+    console.error('Persistance désactivée temporairement : l’enregistrement de l’analyse a échoué.');
+  }
+}
+
+async function listAnalyses(request, response) {
+  // Le chantier auth n’est pas encore implémenté : aucun JWT superviseur ne
+  // peut être vérifié, donc la liste n’est jamais exposée sans authentification.
+  return sendJson(response, 501, { error: 'Auth requise : la consultation des analyses arrivera avec le chantier auth.' });
+}
+
 async function transcribe(request, response) {
   let sessionId;
   try {
@@ -380,6 +426,7 @@ async function analyze(request, response) {
     // Consume the one-use token only after a successful analysis, so a failed
     // attempt can be retried without paying for a new transcription.
     if (!record.synthetic) forgetTranscription(analysisToken);
+    await persistAnalysis({ transcript: record.transcript, findings: anchoredAnalysis });
     sendJson(response, 200, anchoredAnalysis);
   } catch (error) {
     if (error.status === 429 && error.retryAfterSeconds) response.setHeader('retry-after', String(error.retryAfterSeconds));
@@ -394,6 +441,7 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
   if (request.method === 'POST' && url.pathname === '/api/transcribe') return transcribe(request, response);
   if (request.method === 'POST' && url.pathname === '/api/analyze') return analyze(request, response);
+  if (request.method === 'GET' && url.pathname === '/api/analyses') return listAnalyses(request, response);
   if (request.method !== 'GET' && request.method !== 'HEAD') return sendJson(response, 405, { error: 'Méthode non autorisée.' });
 
   const requestedPath = url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname);
