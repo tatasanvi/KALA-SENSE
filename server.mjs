@@ -215,10 +215,13 @@ function getApiKey() {
 // Sans SUPABASE_URL ni SUPABASE_SECRET_KEY, l'analyse est refusée (503)
 // pour éviter toute perte silencieuse. La transcription reste possible.
 function getSupabaseConfig() {
-  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-  const serviceKey = process.env.SUPABASE_SECRET_KEY || '';
+  const url = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const serviceKey = (process.env.SUPABASE_SECRET_KEY || '').trim();
   if (!url || !serviceKey) {
     throw Object.assign(new Error('Persistance Supabase non configurée. Ajoute SUPABASE_URL et SUPABASE_SECRET_KEY puis redémarre le serveur.'), { status: 503 });
+  }
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)) {
+    throw Object.assign(new Error(`SUPABASE_URL invalide (« ${url.slice(0, 40)}… »). Attendu : https://xyzcompany.supabase.co sans suffixe.`), { status: 503 });
   }
   return { url, serviceKey };
 }
@@ -272,7 +275,12 @@ async function listAnalyses(request, response) {
       signal: AbortSignal.timeout(15_000),
     });
     if (!supabaseResponse.ok) {
-      throw Object.assign(new Error(`Lecture Supabase impossible (statut ${supabaseResponse.status}).`), { status: 502 });
+      let detail = '';
+      try {
+        const errBody = await supabaseResponse.clone().json();
+        detail = errBody?.message || errBody?.hint || JSON.stringify(errBody).slice(0, 200);
+      } catch { detail = await supabaseResponse.clone().text().then((t) => t.slice(0, 200)).catch(() => ''); }
+      throw Object.assign(new Error(`Lecture Supabase impossible (statut ${supabaseResponse.status})${detail ? ` : ${detail}` : ''}.`), { status: 502 });
     }
     const rows = await supabaseResponse.json();
     const items = (Array.isArray(rows) ? rows : []).map((row) => ({
