@@ -383,6 +383,34 @@ $('#copy-button').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(activeTranscript); showNotice('Transcription copiée dans le presse-papiers.', 'success'); }
   catch { showNotice('Impossible d’accéder au presse-papiers dans ce contexte.', 'error'); }
 });
+async function refreshHistory() {
+  const panel = $('#history-panel');
+  const listEl = $('#history-list');
+  if (!panel || !listEl) return;
+  try {
+    const result = await fetch('/api/analyses');
+    const data = await result.json().catch(() => ({}));
+    if (!result.ok) throw new Error(data.error || 'Historique indisponible.');
+    const items = Array.isArray(data.items) ? data.items : [];
+    if (!items.length) {
+      panel.hidden = false;
+      listEl.replaceChildren(Object.assign(document.createElement('li'), { textContent: 'Aucune analyse sauvegardée pour le moment.' }));
+      return;
+    }
+    panel.hidden = false;
+    listEl.replaceChildren(...items.map((item) => {
+      const row = document.createElement('li');
+      const date = item.createdAt ? new Date(item.createdAt).toLocaleString('fr-FR') : 'date inconnue';
+      const score = item.qualityScore ?? '—';
+      row.textContent = `${date} · score ${score} · ${item.findingCount} constat(s) — ${(item.summary || '').slice(0, 120)}`;
+      return row;
+    }));
+  } catch (error) {
+    panel.hidden = false;
+    listEl.replaceChildren(Object.assign(document.createElement('li'), { textContent: `Historique indisponible : ${error.message}` }));
+  }
+}
+
 $('#approve-button').addEventListener('click', () => {
   $('#review-bar').hidden = true;
   const result = $('#review-result'); result.hidden = false;
@@ -416,3 +444,5 @@ $('#reject-button').addEventListener('click', () => {
 });
 
 if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+
+refreshHistory();

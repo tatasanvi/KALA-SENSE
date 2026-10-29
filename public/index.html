@@ -82,6 +82,10 @@
           </div>
           <div class="review-bar" id="review-bar"><div><strong>Décision du superviseur</strong><span>Les constats de l’IA ne sont pas des verdicts. Les suivis restent temporaires dans cette session.</span></div><div class="review-actions"><button type="button" class="button button-quiet" id="reject-button">Rejeter l’analyse</button><button type="button" class="button button-primary" id="approve-button">Valider et préparer les suivis</button></div></div>
           <div class="review-result" id="review-result" hidden></div>
+          <section class="content-card followup-panel" id="history-panel" aria-labelledby="history-title">
+            <div class="card-title-row"><div><h3 id="history-title">Analyses sauvegardées</h3><p>20 dernières analyses · Supabase</p></div><span class="ai-label">SUPABASE</span></div>
+            <ul class="followup-list" id="history-list"></ul>
+          </section>
           <section class="content-card followup-panel" id="followup-panel" aria-labelledby="followup-title" hidden>
             <div class="card-title-row"><div><h3 id="followup-title">Suivis de cette session</h3><p>Liste de démonstration uniquement · non sauvegardée</p></div><span class="ai-label">SUPERVISEUR</span></div>
             <ul class="followup-list" id="followup-list"></ul>

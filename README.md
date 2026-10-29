@@ -8,10 +8,11 @@ KALA SENSE turns a customer-service conversation into a transcript, evidence-bac
 
 - Transcribes a WAV call with Meta Muse Voice Transcribe, including speaker labels and turn-level timestamps.
 - Reviews the transcript with Meta Muse Spark and returns a structured, evidence-based quality summary.
+- Saves each successful analysis to Supabase (tables `analyses`/`actions` in `supabase/schema.sql`) and lists the 20 most recent in the interface.
 - Lets a supervisor approve or reject the analysis in the interface.
 - Includes one clearly labeled synthetic transcript for a UI walkthrough. Its illustrative result is not a measured call or a real performance statistic.
 
-KALA SENSE does not write uploaded audio to disk. The browser sends the normalized audio to the KALA Node server, which forwards it to Meta Model API for transcription. To connect the transcript to its analysis, the server temporarily holds the transcript and speaker turns in memory for up to 15 minutes; it deletes them when analysis starts. Each transcription receives a random, one-use opaque analysis token so the server can bind that request to the same in-memory transcript. The transcript and turns are then sent to Meta Model API for Muse Spark analysis. Analysis results are returned to the browser and are not persisted. Use only recordings you have permission to process.
+KALA SENSE does not write uploaded audio to disk. The browser sends the normalized audio to the KALA Node server, which forwards it to Meta Model API for transcription. To connect the transcript to its analysis, the server temporarily holds the transcript and speaker turns in memory for up to 15 minutes; it deletes them only after a successful analysis that has also been saved to Supabase. Each transcription receives a random, one-use opaque analysis token so the server can bind that request to the same in-memory transcript. The transcript and turns are then sent to Meta Model API for Muse Spark analysis. Every successful analysis must be saved to Supabase: if `SUPABASE_URL` or `SUPABASE_SECRET_KEY` is missing, `POST /api/analyze` returns 503 and no analysis is lost silently; if the save fails, the token is kept so the analysis can be retried without repaying transcription. Use only recordings you have permission to process.
 
 ## Requirements
 
@@ -23,7 +24,8 @@ The browser converts accepted recordings locally to mono, 16-bit PCM WAV at 24 k
 
 ## Run locally
 
-1. Copy `.env.example` to `.env` and set `MODEL_API_KEY` to your own key.
+1. Copy `.env.example` to `.env` and set `MODEL_API_KEY` to your own key, plus `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (service role) for mandatory persistence.
+2. Apply `supabase/schema.sql` once in the Supabase SQL editor (creates `analyses`/`actions` with RLS, service-role only).
 2. In PowerShell, set the environment variable for the current session:
 
    ```powershell
@@ -48,7 +50,7 @@ The server applies per-process hourly caps of 10 transcription calls and 20 anal
 
 The included `render.yaml` describes a Render Free Node web service. Free instances have 0.1 CPU and 512 MB RAM, receive 750 instance-hours per workspace per calendar month, and may restart. A service idle for 15 minutes spins down; waking it can take about one minute. Its filesystem is ephemeral, and this prototype keeps a pending transcript in process memory, so a restart or sleep can lose it. Keep upload → transcription → analysis in one continuous session, and open the demo shortly before presenting it. Free service hours, outbound bandwidth, and build pipeline usage are workspace-level limits; an exhausted hour allowance suspends Free services for the rest of that month. Render describes Free instances as suitable for preview and testing, not production.
 
-On the initial Render Blueprint creation, enter `MODEL_API_KEY` when prompted. The Blueprint keeps it out of source control with `sync: false`; later Blueprint syncs do not prompt again, so add or rotate the key in the Render service settings when needed. Do not commit the key or put it in the browser bundle.
+On the initial Render Blueprint creation, enter `MODEL_API_KEY`, `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` when prompted. The Blueprint keeps them out of source control with `sync: false`; later Blueprint syncs do not prompt again, so add or rotate the keys in the Render service settings when needed. Do not commit the keys or put them in the browser bundle.
 
 Render references: [Free instances](https://render.com/docs/free), [compute plans](https://render.com/docs/compute-plans), [Blueprint secret variables](https://render.com/docs/blueprint-spec#prompting-for-secret-values).
 

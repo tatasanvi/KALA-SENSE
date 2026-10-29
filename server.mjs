@@ -211,50 +211,83 @@ function getApiKey() {
   return key;
 }
 
-// Chantier 1 « persistance » (Supabase, zéro dépendance, fetch natif).
-// Optionnel : sans SUPABASE_URL ni SUPABASE_SECRET_KEY, la persistance est
-// désactivée et le parcours existant (transcription + analyse) est inchangé.
-const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY || '';
-const persistenceEnabled = Boolean(supabaseUrl && supabaseServiceKey);
-if (!persistenceEnabled) {
-  console.log('Persistance désactivée : SUPABASE_URL ou SUPABASE_SECRET_KEY manquant.');
+// Persistance Supabase obligatoire (zéro dépendance, fetch natif).
+// Sans SUPABASE_URL ni SUPABASE_SECRET_KEY, l'analyse est refusée (503)
+// pour éviter toute perte silencieuse. La transcription reste possible.
+function getSupabaseConfig() {
+  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+  const serviceKey = process.env.SUPABASE_SECRET_KEY || '';
+  if (!url || !serviceKey) {
+    throw Object.assign(new Error('Persistance Supabase non configurée. Ajoute SUPABASE_URL et SUPABASE_SECRET_KEY puis redémarre le serveur.'), { status: 503 });
+  }
+  return { url, serviceKey };
 }
+const supabaseBoot = (() => {
+  try {
+    getSupabaseConfig();
+    console.log('Persistance Supabase active.');
+    return true;
+  } catch {
+    console.log('Persistance Supabase manquante : les analyses seront refusées (503) jusqu’à configuration.');
+    return false;
+  }
+})();
 
 async function persistAnalysis({ transcript, findings }) {
-  if (!persistenceEnabled) return;
-  try {
-    const supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/analyses`, {
-      method: 'POST',
-      headers: {
-        apikey: supabaseServiceKey,
-        authorization: `Bearer ${supabaseServiceKey}`,
-        'content-type': 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify({
-        // org_id et supervisor_id réels fournis par le chantier auth à venir.
-        org_id: 'demo',
-        supervisor_id: null,
-        transcript,
-        findings,
-        status: 'completed',
-      }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!supabaseResponse.ok) {
-      throw new Error(`statut ${supabaseResponse.status}`);
-    }
-  } catch {
-    // La persistance ne doit jamais casser une analyse réussie ni exposer de secret.
-    console.error('Persistance désactivée temporairement : l’enregistrement de l’analyse a échoué.');
+  const { url, serviceKey } = getSupabaseConfig();
+  const supabaseResponse = await fetch(`${url}/rest/v1/analyses`, {
+    method: 'POST',
+    headers: {
+      apikey: serviceKey,
+      authorization: `Bearer ${serviceKey}`,
+      'content-type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify({
+      org_id: 'demo',
+      supervisor_id: null,
+      transcript,
+      findings,
+      status: 'completed',
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!supabaseResponse.ok) {
+    throw Object.assign(new Error(`Sauvegarde Supabase impossible (statut ${supabaseResponse.status}). Réessaie l’analyse sans repayer de transcription.`), { status: 502 });
   }
+  const rows = await supabaseResponse.json().catch(() => []);
+  return Array.isArray(rows) && rows[0]?.id ? rows[0].id : null;
 }
 
 async function listAnalyses(request, response) {
-  // Le chantier auth n’est pas encore implémenté : aucun JWT superviseur ne
-  // peut être vérifié, donc la liste n’est jamais exposée sans authentification.
-  return sendJson(response, 501, { error: 'Auth requise : la consultation des analyses arrivera avec le chantier auth.' });
+  try {
+    const { url, serviceKey } = getSupabaseConfig();
+    const listUrl = new URL(`${url}/rest/v1/analyses`);
+    listUrl.searchParams.set('org_id', 'eq.demo');
+    listUrl.searchParams.set('select', 'id,created_at,status,transcript,findings');
+    listUrl.searchParams.set('order', 'created_at.desc');
+    listUrl.searchParams.set('limit', '20');
+    const supabaseResponse = await fetch(listUrl, {
+      headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!supabaseResponse.ok) {
+      throw Object.assign(new Error(`Lecture Supabase impossible (statut ${supabaseResponse.status}).`), { status: 502 });
+    }
+    const rows = await supabaseResponse.json();
+    const items = (Array.isArray(rows) ? rows : []).map((row) => ({
+      id: row.id,
+      createdAt: row.created_at,
+      status: row.status,
+      summary: row.findings?.summary || '',
+      qualityScore: row.findings?.qualityScore ?? null,
+      findingCount: Array.isArray(row.findings?.findings) ? row.findings.findings.length : 0,
+      transcriptPreview: typeof row.transcript === 'string' ? row.transcript.slice(0, 220) : '',
+    }));
+    return sendJson(response, 200, { items });
+  } catch (error) {
+    return sendJson(response, error.status || 502, { error: error.message || 'La lecture de l’historique a échoué.' });
+  }
 }
 
 async function transcribe(request, response) {
@@ -423,11 +456,11 @@ async function analyze(request, response) {
     const content = completion.choices?.[0]?.message?.content;
     if (!content) throw new Error('Meta a renvoyé une réponse vide.');
     const anchoredAnalysis = anchorFindings(JSON.parse(content), turns);
-    // Consume the one-use token only after a successful analysis, so a failed
-    // attempt can be retried without paying for a new transcription.
+    // Persistance obligatoire : le jeton n'est consommé qu'après une analyse
+    // ET une sauvegarde réussies, pour permettre un retry sans repayer.
+    const analysisId = await persistAnalysis({ transcript: record.transcript, findings: anchoredAnalysis });
     if (!record.synthetic) forgetTranscription(analysisToken);
-    await persistAnalysis({ transcript: record.transcript, findings: anchoredAnalysis });
-    sendJson(response, 200, anchoredAnalysis);
+    sendJson(response, 200, analysisId ? { ...anchoredAnalysis, analysisId } : anchoredAnalysis);
   } catch (error) {
     if (error.status === 429 && error.retryAfterSeconds) response.setHeader('retry-after', String(error.retryAfterSeconds));
     const message = error.name === 'TimeoutError'

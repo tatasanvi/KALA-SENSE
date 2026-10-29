@@ -12,3 +12,7 @@ services:
         value: production
       - key: MODEL_API_KEY
         sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
