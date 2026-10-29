@@ -437,7 +437,7 @@ async function analyze(request, response) {
       method: 'POST',
       headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: 'muse-spark-1.3',
+        model: 'muse-spark-1.3-contributor',
         messages: [
           {
             role: 'system',

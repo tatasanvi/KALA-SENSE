@@ -40,7 +40,7 @@ No API key is needed to view the interface or see the labeled synthetic example.
 ## Meta models used
 
 - `muse-voice-transcribe-1.0` at `https://api.meta.ai/v1/asr/transcribe` for WAV transcription and diarization.
-- `muse-spark-1.3` at `https://api.meta.ai/v1/chat/completions` for structured quality review.
+- `muse-spark-1.3-contributor` at `https://api.meta.ai/v1/chat/completions` for structured quality review (Contributor mode; Standard `muse-spark-1.3` needs a different plan).
 
 The API key is read only by the Node server from `MODEL_API_KEY`; it is never sent to the browser. Model outputs are suggestions, not verified facts. Supervisors must review every conclusion.
 
