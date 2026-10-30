@@ -2,7 +2,7 @@
 
 KALA SENSE turns a customer-service conversation into a transcript, evidence-backed quality findings, and human-reviewed follow-up actions.
 
-**Hackathon entry:** Indie Developer · solo contributor: **SANVI TATA MARC ANTOINE**.
+**
 
 ## What this prototype does
 
