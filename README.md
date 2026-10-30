@@ -1,4 +1,4 @@
-# KALA SENSE — Hackathon prototype
+# KALA SENSE
 
 KALA SENSE turns a customer-service conversation into a transcript, evidence-backed quality findings, and human-reviewed follow-up actions.
 
