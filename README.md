@@ -2,7 +2,7 @@
 
 KALA SENSE turns a customer-service conversation into a transcript, evidence-backed quality findings, and human-reviewed follow-up actions.
 
-**
+
 
 ## What this prototype does
 
@@ -54,6 +54,3 @@ On the initial Render Blueprint creation, enter `MODEL_API_KEY`, `SUPABASE_URL`,
 
 Render references: [Free instances](https://render.com/docs/free), [compute plans](https://render.com/docs/compute-plans), [Blueprint secret variables](https://render.com/docs/blueprint-spec#prompting-for-secret-values).
 
-## Hackathon work boundary
-
-This repository contains the new hackathon prototype. If an earlier KALA SENSE dashboard exists elsewhere, it is not imported here and should not be included in the submission demo unless its pre-hackathon origin is clearly disclosed and only hackathon-built changes are shown.
